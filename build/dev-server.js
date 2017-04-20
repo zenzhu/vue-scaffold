@@ -75,7 +75,6 @@ var requireUncached = function (module) {
 
       var path2mock = path.relative(mockDirectory, filePath)
       var point = '/' + path2mock.substring(0, path2mock.lastIndexOf('.'))
-      console.log(point)
 
       app.use(point, function (req, res, next) {
         mock = requireUncached(filePath)
