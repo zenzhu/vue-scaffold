@@ -11,8 +11,8 @@ var path = require('path')
 var express = require('express')
 var webpack = require('webpack')
 var proxyMiddleware = require('http-proxy-middleware')
+var mockMiddleware = require('http-mock-middleware')
 var webpackConfig = require('./webpack.dev.conf')
-var HTTP_METHODS = require('http').METHODS
 
 // default port where dev server listens for incoming traffic
 var port = process.env.PORT || config.dev.port
@@ -43,10 +43,6 @@ compiler.plugin('compilation', function (compilation) {
   })
 })
 
-var isFunction = (x) => {
-  return Object.prototype.toString.call(x) == '[object Function]';
-}
-
 // proxy api requests
 Object.keys(proxyTable).forEach(function (context) {
   var options = proxyTable[context]
@@ -57,67 +53,8 @@ Object.keys(proxyTable).forEach(function (context) {
   app.use(proxyMiddleware(options.filter || context, options))
 })
 
-var requireUncached = function (module) {
-  delete require.cache[require.resolve(module)]
-  return require(module)
-}
-
-;(function traverseMockDir(mockDir) {
-  fs.readdirSync(mockDir).forEach(function (file) {
-    var filePath = path.resolve(mockDir, file)
-    var mock
-    if (fs.statSync(filePath).isDirectory()) {
-      traverseMockDir(filePath)
-    } else {
-      if (path.extname(file) !== '.js') {
-        return
-      }
-
-      var path2mock = path.relative(mockDirectory, filePath)
-      var point = '/' + path2mock.substring(0, path2mock.lastIndexOf('.'))
-
-      app.use(point, function (req, res, next) {
-        mock = requireUncached(filePath)
-        if (isFunction(mock)) {
-          mock(req, res, next)
-        } else {
-          var methodDefined = false
-          var returned = false
-          for (let method in mock) {
-            if (!method.startsWith('__')) {
-              continue
-            }
-
-            var rawMethod = method.toUpperCase().slice(2)
-            if (HTTP_METHODS.indexOf(rawMethod) === -1) {
-              continue
-            }
-
-            methodDefined = true
-            if (req.method === rawMethod) {
-              returned = true
-              mock = mock[method]
-              if (isFunction(mock)) {
-                mock(req, res, next)
-              } else {
-                res.json(mock)
-              }
-              break
-            }
-          }
-
-          if (!methodDefined) {
-            res.json(mock)
-          }
-
-          if (!returned) {
-            next()
-          }
-        }
-      })
-    }
-  })
-})(mockDirectory)
+// mock data in mockDirectory
+app.use(mockMiddleware(mockDirectory))
 
 // handle fallback for HTML5 history API
 app.use(require('connect-history-api-fallback')())

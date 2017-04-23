@@ -29,7 +29,11 @@ export default {
     }
   },
   mounted () {
-    fetch('/api/hello.json')
+    fetch('/api/hello.json', {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
       .then(res => res.json())
       .then(data => {
         this.msg = data.msg

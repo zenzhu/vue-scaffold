@@ -11,6 +11,7 @@
     "lint": "eslint --ext .js,.vue src"
   },
   "dependencies": {
+    "http-mock-middleware": "^1.0.0",
     "vue": "^2.2.2"
   },
   "devDependencies": {

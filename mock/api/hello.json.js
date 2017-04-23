@@ -1,4 +1,7 @@
 module.exports = {
-  success: true,
-  msg: 'Welcome to Your Vue.js App'
+  __GET: function (req, res, next) {
+    res.json({
+      success: true
+    })
+  }
 }
